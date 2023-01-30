@@ -1,18 +1,25 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using ExitGames.Client.Photon;
 using Photon.Chat;
 using Photon.Pun;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PhotonChatManager : MonoBehaviour, IChatClientListener
 {
-  ChatClient chatClient;
-  [SerializeField] string userID;
+  #region Setup
 
-  // Start is called before the first frame update
-  void Start()
+  ChatClient chatClient;
+  [SerializeField] GameObject joinChatButton;
+  [SerializeField] string username;
+  private bool _isConnected;
+
+  public void ChatConnectOnClick()
   {
+    _isConnected = true;
     chatClient = new ChatClient(this);
     chatClient
       .Connect(
@@ -22,29 +29,65 @@ public class PhotonChatManager : MonoBehaviour, IChatClientListener
           .AppIdChat,
         PhotonNetwork
           .AppVersion,
-        new AuthenticationValues(userID)
+        new AuthenticationValues(username)
       );
+    Debug.Log("Connecting ...");
   }
+
+  #endregion Setup
+
+  #region General
+
+  [SerializeField] GameObject chatPanel;
+  string privateReceiver = "";
+  string currentChat;
+  [SerializeField] TMP_InputField chatField;
+  [SerializeField] TMP_Text chatDisplay;
+
+  #endregion General
+
+  // Start is called before the first frame update
+  void Start()
+  {
+
+  }
+
 
   // Update is called once per frame
   void Update()
   {
-    chatClient.Service();
+    if (_isConnected) chatClient.Service();
+
+    if (chatField.text != "" && Input.GetKey(KeyCode.Return))
+    {
+      SubmitPublicChatOnClick();
+      // SubmitPrivateChatOnClick();
+    }
   }
 
   public void DebugReturn(DebugLevel level, string message)
   {
-    throw new System.NotImplementedException();
+    // throw new System.NotImplementedException();
+    Debug.Log("------- level & message -------");
+    Debug.Log(level);
+    Debug.Log(message);
+    Debug.Log("------------- END -------------");
   }
 
   public void OnChatStateChange(ChatState state)
   {
-    throw new System.NotImplementedException();
+    Debug.Log(state);
   }
 
+  
+  // This fn called when chatClient.Connect success
   public void OnConnected()
   {
-    throw new System.NotImplementedException();
+    Debug.Log("Connected");
+    // _isConnected = true;
+    joinChatButton.SetActive(false);
+    chatClient.Subscribe(new string[] { "RegionChannel" });
+    // SubToChatOnClick();
   }
 
   public void OnDisconnected()
@@ -54,7 +97,15 @@ public class PhotonChatManager : MonoBehaviour, IChatClientListener
 
   public void OnGetMessages(string channelName, string[] senders, object[] messages)
   {
-    throw new System.NotImplementedException();
+    string msgs = "";
+    for (int i = 0; i < senders.Length; i++)
+    {
+      msgs = string.Format("{0}: {1}", senders[i], messages[i]);
+
+      chatDisplay.text += "\n " + msgs;
+
+      Debug.Log(msgs);
+    }
   }
 
   public void OnPrivateMessage(string sender, object message, string channelName)
@@ -69,7 +120,7 @@ public class PhotonChatManager : MonoBehaviour, IChatClientListener
 
   public void OnSubscribed(string[] channels, bool[] results)
   {
-    throw new System.NotImplementedException();
+    chatPanel.SetActive(true);
   }
 
   public void OnUnsubscribed(string[] channels)
@@ -85,6 +136,36 @@ public class PhotonChatManager : MonoBehaviour, IChatClientListener
   public void OnUserUnsubscribed(string channel, string user)
   {
     throw new System.NotImplementedException();
+  }
+
+  public void UserNameOnValueChange(string valueIn)
+  {
+    username = valueIn;
+  }
+
+
+  #region PublicChat
+
+  public void SubmitPublicChatOnClick()
+  {
+    if (privateReceiver == "")
+    {
+      chatClient.PublishMessage("RegionChannel", currentChat);
+      chatField.text = "";
+      currentChat = "";
+    }
+  }
+
+  public void TypeChatOnValueChange(string valueIn)
+  {
+    currentChat = valueIn;
+  }
+
+  #endregion PublicChat
+
+  public void SubmitPrivateChatOnClick()
+  {
+    throw new NotImplementedException();
   }
 
 }
