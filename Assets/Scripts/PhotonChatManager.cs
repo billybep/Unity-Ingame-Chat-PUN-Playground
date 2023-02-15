@@ -1,12 +1,8 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using ExitGames.Client.Photon;
 using Photon.Chat;
 using Photon.Pun;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class PhotonChatManager : MonoBehaviour, IChatClientListener
 {
@@ -110,7 +106,13 @@ public class PhotonChatManager : MonoBehaviour, IChatClientListener
 
   public void OnPrivateMessage(string sender, object message, string channelName)
   {
-    throw new System.NotImplementedException();
+    string msgs = "";
+
+    msgs = string.Format("(Private) {0}: {1}", sender, message);
+
+    chatDisplay.text += "\n " + msgs;
+
+    Debug.Log(msgs);
   }
 
   public void OnStatusUpdate(string user, int status, bool gotMessage, object message)
@@ -163,9 +165,22 @@ public class PhotonChatManager : MonoBehaviour, IChatClientListener
 
   #endregion PublicChat
 
-  public void SubmitPrivateChatOnClick()
+  #region PrivateChat
+
+  public void ReceiverOnValueChange(string valueIn)
   {
-    throw new NotImplementedException();
+    privateReceiver = valueIn;
   }
 
+  public void SubmitPrivateChatOnClick()
+  {
+    if (privateReceiver != "")
+    {
+      chatClient.SendPrivateMessage(privateReceiver, currentChat);
+      chatField.text = "";
+      currentChat = "";
+    }
+  }
+
+  #endregion PrivateChat
 }
